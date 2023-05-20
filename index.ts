@@ -6,93 +6,54 @@ import typescript from "highlight.js/lib/languages/typescript";
 
 hljs.registerLanguage("typescript", typescript);
 
-const SPACE = " ";
-const UNDERSCORE = "_";
-const HYPHEN = "-";
+import { AxiosGenerator } from "./axios-generator";
+import { ServiceGenerator } from "./service-generator";
+import { ReducerGenerator } from "./reducer-generator";
+import { Config, Schema } from "./meta-models";
+import { buildNameVariations } from "./name-variations";
 
-const title = "Rapid Application Development Patterns";
-const removeSpaces = (s) => s.split(SPACE).join("");
-const replaceSpaces = (s, sub) => s.split(SPACE).join(sub);
-const replace = (s, targ, sub) => s.split(targ).join(sub);
+const albumSchema: Schema = {
+  model: "album",
+  modelPlural: "albums",
+};
 
-const pascalCase = removeSpaces(title);
-const snakeCase = replaceSpaces(title, UNDERSCORE);
-const kebabCase = replace(snakeCase, UNDERSCORE, HYPHEN);
-
-// Example: Dynamic Method Invocation
-const add = ({ a, b }) => a + b;
-const subtract = ({ a, b }) => a - b;
-const divide = ({ a, b }) => a / b;
-const multiply = ({ a, b }) => a * b;
-
-const transaction = { func: add, params: { a: 1, b: 3 } };
-
-const ledger = [
-  { func: add, params: { a: 1, b: 3 } },
-  { func: subtract, params: { a: 6, b: 5 } },
-  { func: divide, params: { a: 6, b: 3 } },
-  { func: multiply, params: { a: 2, b: 3 } },
-];
-
-const execute = (action) => action.func(action.params);
-
-const result = execute(transaction);
-
-let output = "";
-ledger.forEach((action) => (output += `\nResult: ${execute(action)}`));
-
-const mappedOutput = ledger.map((action) => execute(action));
-
-const reducedOutput = ledger.reduce((total, line) => {
-  return (total += execute(line));
-}, 0);
+const config: Config = {
+  name: "workshop",
+  application: "dashboard",
+  scope: "acme",
+};
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
-<h2>Rapid Primer</h2>
-
-<h4>Basic String Manipulation</h4>
+<h2>Model Name Variations</h2>
 <pre>
-<code class="language-typescript">
- "${title}"
- // becomes 
- "${pascalCase}"
- // when we remove spaces
+<code class="language-typescript">${JSON.stringify(
+  buildNameVariations(albumSchema),
+  null,
+  2
+)}</code> 
+</pre>
+<hr />
 
- "${title}"
- // becomes
- "${snakeCase}"
- // when we replace spaces with an underscore
-
- "${snakeCase}"
- // becomes
- "${kebabCase}"
- // when we replace underscores with a hypen
-</code> 
+<h2>HttpClient Template</h2>
+<pre>
+<code class="language-typescript">${
+  ServiceGenerator.generate(albumSchema, config).template
+}</code>  
 </pre>
 
-<h4>Single Invocation</h4>
+<h2>Axios Template</h2>
 <pre>
-<code class="language-typescript">${result}</code> 
+<code class="language-typescript">${
+  AxiosGenerator.generate(albumSchema, config).template
+}</code>  
 </pre>
 
-<h4>Sequenced Invocation</h4>
+<h2>Reducer Template</h2>
 <pre>
-<code class="language-typescript">${output}</code> 
-</pre>
-
-<h4>Mapped Invocation</h4>
-<pre>
-<code class="language-typescript">
-${JSON.stringify(mappedOutput, null, 2)}
-</code> 
-</pre>
-
-<h4>Reduced Invocation</h4>
-<pre>
-<code class="language-typescript">
-${JSON.stringify(reducedOutput, null, 2)}
-</code> 
+<code class="language-typescript">${
+  ReducerGenerator.generate(albumSchema, config).template
+}</code>  
 </pre>
 `;
 
