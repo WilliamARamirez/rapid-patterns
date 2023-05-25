@@ -13,16 +13,19 @@ import { Config, Schema } from "./meta-models";
 import { buildNameVariations } from "./name-variations";
 import { GrpcServiceGenerator } from "./grpc-service-generator";
 import { DotnetEntityGenerator } from "./dotnet-entities";
+import { DotnetControllerGenerator } from "./dotnet-controllers";
+import { DotnetDtoGenerator } from "./dotnet-dto";
 
 const projectSchema: Schema = {
   model: "project",
   modelPlural: "projects",
+  props: [{ value: "name", type: "string" }],
 };
 
 const clientSchema: Schema = {
   model: "client",
   modelPlural: "clients",
-  props: [{ string: "name" }, {string: 'primaryContact'}, { objectList: projectSchema }],
+  props: [{ value: "name", type: "string" }, {value: 'primaryContact', type: "string"}, { type:"objectList", value: projectSchema }],
 };
 
 const config: Config = {
@@ -33,6 +36,20 @@ const config: Config = {
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
+<h2>.NET DTOs </h2>
+<pre>
+<code class="language-typescript">${
+  DotnetDtoGenerator.generate(clientSchema, config).template
+}</code>  
+</pre>
+
+<h2>.NET Controllers </h2>
+<pre>
+<code class="language-typescript">${
+  DotnetControllerGenerator.generate(clientSchema, config).template
+}</code>  
+</pre>
+
 <h2>.NET Entities </h2>
 <pre>
 <code class="language-typescript">${

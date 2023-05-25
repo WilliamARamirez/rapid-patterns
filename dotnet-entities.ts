@@ -6,57 +6,23 @@ import {
   pascalCase,
   startCase,
 } from "./name-variations";
+import { getConstructorParameters } from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =
     buildNameVariations(schema);
-
   const { props } = schema;
-  console.log(buildNameVariations(schema));
-  console.log(props);
+  
+  const constructorParameters = getConstructorParameters(props);
 
-  const declarationStatements = props
-    .map((p) => {
-      for (const [key, value] of Object.entries(p)) {
-        switch (key) {
-          case "string":
-            return `  public string ${startCase(value)} { get; private set; }
-`;
-          case "objectList":
-            const { ref, refs, model, models, singleParams } =
-              buildNameVariations(value);
-            return `  private readonly List< ${model} > _${refs} = new List< ${model} >();
-  public IEnumerable< ${model} > ${refs} => _${refs}.AsReadOnly();
-            
-`;
-        }
-      }
-    })
-    .join("");
-
-  const constructorParameters = props
-    .map((p) => {
-      for (const [key, value] of Object.entries(p)) {
-        switch (key) {
-          case "string":
-            return `string ${camelCase(value)}`;
-        }}}).join(", ");
-
-  const assignments = props.map
-  ((p) => {
-    for (const [key, value] of Object.entries(p)) {
-      switch (key) {
-        case "string":
-          return `${startCase(value)} = Guard.Against.NullOrEmpty(${camelCase(value)}, nameof(${camelCase(value)}));
+  const assignments = props.filter((p) => p.type === 'string').map((p) =>  {
+          return `${startCase(p.value)} = Guard.Against.NullOrEmpty(${camelCase(p.value)}, nameof(${camelCase(p.value)}));
 `;  
-      }}}).join("");
+      }).join("");
 
-const addObjectMethods = props.map((p) => {
-  for (const [key, value] of Object.entries(p)) {
-    switch (key) {
-          case "objectList":
-            const obj = buildNameVariations(value);
-            return `public void Add${obj.model}(${obj.model} new${obj.model})
+const addObjectMethods = props.filter((p) => p.type === 'objectList').map((p) => {
+   const obj = buildNameVariations(p.value);
+  return `public void Add${obj.model}(${obj.model} new${obj.model})
 {
   Guard.Against.Null(new${obj.model}, nameof(new${obj.model}));
   _${obj.ref}.Add(new${obj.model});
@@ -64,10 +30,19 @@ const addObjectMethods = props.map((p) => {
   var new${obj.model}AddedEvent = new New${obj.model}AddedEvent(this, new${obj.model});
   base.RegisterDomainEvent(new${obj.model}AddedEvent);
 };
+
+public void Remove${obj.model}(${obj.model} ${obj.ref})
+{
+  Guard.Against.Null(${obj.ref}, nameof(${obj.ref}));
+  _${obj.ref}.Remove(${obj.ref});
+          
+  var new${obj.model}RemovedEvent = new New${obj.model}RemovedEvent(this, ${obj.model});
+  base.RegisterDomainEvent(new${obj.model}RemovedEvent);
+};
             `;
         }
-      }
-    })
+      
+    )
     .join("");
 
 
@@ -90,8 +65,7 @@ public class ${model} : EntityBase, IAggregateRoot
 ${constructor}
 ${addObjectMethods}  
 
-
-  
+}
 `;
 
   return {
