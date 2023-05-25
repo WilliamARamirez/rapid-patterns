@@ -26,6 +26,9 @@ export const addUnderscores = (s) => replace(s, SPACE, UNDERSCORE);
 const _pipe = (a, b) => (arg) => b(a(arg));
 export const transformPipe = (...ops) => ops.reduce(_pipe);
 
+// Type parameter generator
+export const typeParam = (type: string) => "<" + `${type}` + ">";
+
 // interlacing
 export const strip = transformPipe(stripDashes, stripUnderscores);
 export const startCase = transformPipe(strip, capitalizeWords);

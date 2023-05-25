@@ -11,24 +11,46 @@ import { ServiceGenerator } from "./service-generator";
 import { ReducerGenerator } from "./reducer-generator";
 import { Config, Schema } from "./meta-models";
 import { buildNameVariations } from "./name-variations";
+import { GrpcServiceGenerator } from "./grpc-service-generator";
+import { DotnetEntityGenerator } from "./dotnet-entities";
 
-const albumSchema: Schema = {
-  model: "album",
-  modelPlural: "albums",
+const projectSchema: Schema = {
+  model: "project",
+  modelPlural: "projects",
+};
+
+const clientSchema: Schema = {
+  model: "client",
+  modelPlural: "clients",
+  props: [{ string: "name" }, {string: 'primaryContact'}, { objectList: projectSchema }],
 };
 
 const config: Config = {
-  name: "workshop",
-  application: "dashboard",
-  scope: "acme",
+  name: "EQengineered.dotNetDemo",
+  application: "",
+  scope: "",
 };
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
+<h2>.NET Entities </h2>
+<pre>
+<code class="language-typescript">${
+  DotnetEntityGenerator.generate(clientSchema, config).template
+}</code>  
+</pre>
+
+<h2>.NET GRPC Service </h2>
+<pre>
+<code class="language-typescript">${
+  GrpcServiceGenerator.generate(clientSchema, config).template
+}</code>  
+</pre>
+
 <h2>Model Name Variations</h2>
 <pre>
 <code class="language-typescript">${JSON.stringify(
-  buildNameVariations(albumSchema),
+  buildNameVariations(clientSchema),
   null,
   2
 )}</code> 
@@ -38,23 +60,25 @@ appDiv.innerHTML = `
 <h2>HttpClient Template</h2>
 <pre>
 <code class="language-typescript">${
-  ServiceGenerator.generate(albumSchema, config).template
+  ServiceGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
 
 <h2>Axios Template</h2>
 <pre>
 <code class="language-typescript">${
-  AxiosGenerator.generate(albumSchema, config).template
+  AxiosGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
 
 <h2>Reducer Template</h2>
 <pre>
 <code class="language-typescript">${
-  ReducerGenerator.generate(albumSchema, config).template
+  ReducerGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
+
+
 `;
 
 hljs.highlightAll();
