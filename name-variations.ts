@@ -56,4 +56,16 @@ export const addParams = (variations: NameVariations) => ({
   multiParam: buildMultiParam(variations),
 });
 
-export const buildNameVariations = transformPipe(buildBase, addParams);
+export interface IVariations {
+  ref: string;
+  refs: string;
+  model: string;
+  models: string;
+  selector: string;
+  selectors: string;
+  singleParams: string;
+  multiParam: string;
+}
+
+export const buildNameVariations: (schema: Schema) => IVariations =
+  transformPipe(buildBase, addParams);

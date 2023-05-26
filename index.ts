@@ -7,17 +7,18 @@ import { initClipboard } from "./clipboard";
 
 hljs.registerLanguage("typescript", typescript);
 
-import { AxiosGenerator } from "./axios-generator";
+import { AxiosGenerator } from "./axios";
 import { ServiceGenerator } from "./service-generator";
 import { ReducerGenerator } from "./reducer-generator";
 import { Config, Schema } from "./meta-models";
 import { buildNameVariations } from "./name-variations";
-import { GrpcServiceGenerator } from "./grpc-service-generator";
+import { GrpcServiceGenerator } from "./grpc-service";
 import { DotnetEntityGenerator } from "./dotnet-entities";
 import { DotnetControllerGenerator } from "./dotnet-controllers";
 import { DotnetDtoGenerator } from "./dotnet-dto";
-import { DotnetAddToDbContextGenerator } from "./db-context-generator";
+import { DotnetAddToDbContextGenerator } from "./db-context";
 import { DotnetSeedGenerator } from "./dotnet-seed";
+import { DotnetDomainEventGenerator } from "./dotnet-domain-events";
 
 const projectSchema: Schema = {
   model: "project",
@@ -43,6 +44,15 @@ const config: Config = {
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
+<h2>.NET Domain Events generator </h2>
+<button class="btn" data-clipboard-target="#dot-net-domain-events">Copy</button> 
+<pre>
+<code id="dot-net-domain-events" class="language-typescript">${
+  DotnetDomainEventGenerator.generate(clientSchema, config).template
+}
+</code>
+</pre>
+
 <h2>.NET seed generator </h2>
 <button class="btn" data-clipboard-target="#dot-net-seed">Copy</button> 
 <pre>
