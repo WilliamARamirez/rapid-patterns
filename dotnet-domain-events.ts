@@ -27,6 +27,8 @@ const generate = (schema: Schema, { name }: Config) => {
     const f = buildNameVariations(foreignObj);
 
     return `
+  //separate file
+  //src/${name}.Core/ProjectAggregate/Events/New${f.model}AddedTo${parent.model}Event.cs
   using ${name}.SharedKernel;
   namespace ${name}.Core.ProjectAggregate.Events;
   
@@ -43,6 +45,7 @@ const generate = (schema: Schema, { name }: Config) => {
     }
   
   }
+  \n\n
   `;
   };
 

@@ -8,6 +8,7 @@ import {
 } from "./name-variations";
 import {
   getConstructorParameters,
+  getForeignObjectToBeReturnedWithSpecification,
   getforeignObjSchemas,
   getValueTypeMembers,
 } from "./shared-dotnet-utility-methods";
@@ -68,11 +69,8 @@ const generate = (schema: Schema, { name }: Config) => {
     })
     .join("");
 
-  const ForeignObjectToBeReturnedWithSpecification = foreignObjSchemas
-    .map((schema) => {
-      return `${schema.models}`;
-    })
-    .join("");
+  const foreignObjectToBeReturnedWithSpecification =
+    getForeignObjectToBeReturnedWithSpecification(foreignObjSchemas);
 
   const template = `
   using ${name}.Core.ProjectAggregate;
@@ -110,7 +108,7 @@ const generate = (schema: Schema, { name }: Config) => {
     [HttpGet("{${ref}Id:int}")]
     public async Task<IActionResult> GetById(int ${ref}Id)
     {
-      var ${model}spec = new ${model}ByIdWith${ForeignObjectToBeReturnedWithSpecification}Spec(${ref}Id);
+      var ${model}spec = new ${model}ByIdWith${foreignObjectToBeReturnedWithSpecification}Spec(${ref}Id);
       var ${ref} = await _repository.FirstOrDefaultAsync(${model}spec);
       if (${ref} == null)
       {

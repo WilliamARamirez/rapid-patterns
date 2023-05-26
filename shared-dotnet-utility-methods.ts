@@ -31,3 +31,12 @@ export const quoteWrapper = (value) => {
     return value;
   }
 };
+
+export const getForeignObjectToBeReturnedWithSpecification = (
+  foreignObjSchemas
+) =>
+  foreignObjSchemas
+    .map((schema) => {
+      return `${schema.models}`;
+    })
+    .join("");

@@ -62,7 +62,7 @@ const generate = (schema: Schema, { name }: Config) => {
       const round = foreignObjects
         .map((f) => {
           addStatements.push(
-            `\n${parent}.AddItem(${f.model}${counter}For${parent});`
+            `\n\t${parent}.AddItem(${f.model}${counter}For${parent});`
           );
 
           return `
@@ -72,17 +72,14 @@ const generate = (schema: Schema, { name }: Config) => {
 \t{
 ${objectValueAssignment(f.props)}
 \t};
-
-
-
 `;
         })
-        .join("\n");
+        .join("");
 
       counter++;
       delcarations.push(round);
     }
-    return delcarations.join("\n") + addStatements.join("");
+    return delcarations.join("") + addStatements.join("");
   };
 
   const genExamples = (num = 3) => {
@@ -90,20 +87,21 @@ ${objectValueAssignment(f.props)}
     let counter = 1;
     while (num >= counter) {
       const example = `
-\tpublic static readonly ${model} ${model}${counter}= new ${model}
+\t// parent ${model} object
+\tpublic static readonly ${model} ${model}${counter} = new ${model}
 \t{
 ${objectValueAssignment(props)}
 \t};
 
-
-
+\t// child foreign objects
 ${foreignObjectValueAssignment(foreignObjects, `${model}${counter}`)}
+\n
 `;
 
       counter++;
       examples.push(example);
     }
-    return examples.join("\n");
+    return examples.join("");
   };
 
   const template = `${genExamples()}`;
