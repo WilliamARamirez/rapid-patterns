@@ -15,6 +15,7 @@ import { GrpcServiceGenerator } from "./grpc-service-generator";
 import { DotnetEntityGenerator } from "./dotnet-entities";
 import { DotnetControllerGenerator } from "./dotnet-controllers";
 import { DotnetDtoGenerator } from "./dotnet-dto";
+import { DotnetAddToDbContextGenerator } from "./db-context-generator";
 
 const projectSchema: Schema = {
   model: "project",
@@ -25,7 +26,11 @@ const projectSchema: Schema = {
 const clientSchema: Schema = {
   model: "client",
   modelPlural: "clients",
-  props: [{ value: "name", type: "string" }, {value: 'primaryContact', type: "string"}, { type:"objectList", value: projectSchema }],
+  props: [
+    { value: "name", type: "string" },
+    { value: "primaryContact", type: "string" },
+    { type: "objectList", value: projectSchema },
+  ],
 };
 
 const config: Config = {
@@ -36,6 +41,13 @@ const config: Config = {
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
+<h2>.NET add to snippets to AppDbContext </h2>
+<pre>
+<code class="language-typescript">${
+  DotnetAddToDbContextGenerator.generate(clientSchema, config).template
+}</code>  
+</pre>
+
 <h2>.NET DTOs </h2>
 <pre>
 <code class="language-typescript">${

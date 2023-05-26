@@ -6,53 +6,74 @@ import {
   pascalCase,
   startCase,
 } from "./name-variations";
-import { getConstructorParameters, getStringsFromProps } from "./shared-dotnet-utility-methods";
+import {
+  getConstructorParameters,
+  getStringsFromProps,
+} from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {
-    const { ref, refs, model, models, singleParams } =
+  const { ref, refs, model, models, singleParams } =
     buildNameVariations(schema);
 
-    const { props } = schema;
-    const topLevelStrings = getStringsFromProps(props);
+  const { props } = schema;
+  const topLevelStrings = getStringsFromProps(props);
 
+  const dtoValuePropsArray = topLevelStrings.map((p, index, arr) => {
+    const isLast = index === arr.length - 1;
+    return `${camelCase(p.value)}: ${ref}.${pascalCase(p.value)}${
+      isLast ? "" : ", \n \t"
+    }`;
+  });
+  const dtoValueProps = [
+    ...[`id: ${ref}.Id, \n \t`],
+    ...dtoValuePropsArray,
+  ].join("\t");
 
-    const dtoValuePropsArray = topLevelStrings
-    .map((p , index, arr) => {
-      const isLast = index === arr.length - 1;
-            return `${camelCase(p.value)}: ${ref}.${pascalCase(p.value)}${isLast ? "" : ", \n \t"}`;
-        })
-    const dtoValueProps = [...[`id: ${ref}.Id, \n \t`], ...dtoValuePropsArray].join("\t");
+  const dtoObjectProps = props
+    .filter((p) => p.type === "objectList")
+    .map((p) => {
+      const obj = p.value;
+      const objSchema = buildNameVariations(obj);
+      const objStrings = obj.props.filter((p) => p.type === "string");
+      const args = objStrings.map((p, index, arr) => {
+        const isLast = index === arr.length - 1;
+        return `${objSchema.ref}.${startCase(p.value)}${
+          isLast ? "" : ", \n \t"
+        }`;
+      });
 
-
-    const dtoObjectProps = props
-        .filter((p) => p.type === 'objectList')
-        .map((p ) => {
-        const obj = p.value;
-        const objSchema = buildNameVariations(obj);
-        const objStrings = obj.props.filter((p) => p.type === 'string')
-         const args =  objStrings.map((p , index, arr) => {
-            const isLast = index === arr.length - 1;
-            return `${objSchema.ref}.${startCase(p.value)}${isLast ? "" : ", \n \t"}`;
-        });
-        
-        return `${objSchema.refs}: new List&lt;${objSchema.model}DTO&gt;
+      return `${objSchema.refs}: new List&lt;${objSchema.model}DTO&gt;
          (
              ${ref}.${objSchema.models}.Select(${objSchema.ref} => new ${objSchema.model}DTO(${objSchema.ref}.Id, ${args}).ToList()
          )
          `;
-        });
+    });
 
-    const constructorReqArgs  =  topLevelStrings.map((p , index, arr) => {
-        const isLast = index === arr.length - 1;
-        return `request.${startCase(p.value)}${isLast ? "" : ", \n \t"}`;
-    }).join("");
+  const constructorReqArgs = topLevelStrings
+    .map((p, index, arr) => {
+      const isLast = index === arr.length - 1;
+      return `request.${startCase(p.value)}${isLast ? "" : ", \n \t"}`;
+    })
+    .join("");
 
-   const creationResultDtoValues =  [  ... [{value: 'id'}], ...topLevelStrings ];
-    const creationResultDto = creationResultDtoValues.map((p , index, arr) => {
-        const isLast = index === arr.length - 1;
-        return `${lowercase(p.value)}: created${model}.${pascalCase(p.value)}${isLast ? "" : ", \n \t"}`;
-    }).join("");
+  const creationResultDtoValues = [...[{ value: "id" }], ...topLevelStrings];
+  const creationResultDto = creationResultDtoValues
+    .map((p, index, arr) => {
+      const isLast = index === arr.length - 1;
+      return `${lowercase(p.value)}: created${model}.${pascalCase(p.value)}${
+        isLast ? "" : ", \n \t"
+      }`;
+    })
+    .join("");
 
+  const createObjectSpecifications = props
+    .filter((p) => p.type === "objectList")
+    .map((p) => {
+      const obj = p.value;
+      const objSchema = buildNameVariations(obj);
+      return `var ${model}spec = new ${model}ByIdWith${objSchema.models}Spec(${ref}Id);`;
+    })
+    .join("\n \t");
 
   const template = `
   using ${name}.Core.ProjectAggregate;
@@ -99,7 +120,7 @@ const generate = (schema: Schema, { name }: Config) => {
   
       var result = new ${model}DTO
       (
-                ${dtoValueProps}${dtoObjectProps? ",": ""}
+                ${dtoValueProps}${dtoObjectProps ? "," : ""}
                 ${dtoObjectProps}
       );
   
