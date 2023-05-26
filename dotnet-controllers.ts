@@ -7,10 +7,9 @@ import {
   startCase,
 } from "./name-variations";
 import {
-  getConstructorParameters,
   getForeignObjectToBeReturnedWithSpecification,
-  getforeignObjSchemas,
   getValueTypeMembers,
+  getforeignObjSchemas,
 } from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {

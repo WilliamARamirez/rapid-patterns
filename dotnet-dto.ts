@@ -1,15 +1,9 @@
 import { Config, Generator, Schema } from "./meta-models";
-import {
-  buildNameVariations,
-  camelCase,
-  lowercase,
-  pascalCase,
-  startCase,
-} from "./name-variations";
+import { buildNameVariations, camelCase, startCase } from "./name-variations";
 import {
   getConstructorParameters,
-  getforeignObjSchemas,
   getValueTypeMembers,
+  getforeignObjSchemas,
 } from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {

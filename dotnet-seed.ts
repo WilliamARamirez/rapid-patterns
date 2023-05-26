@@ -1,18 +1,11 @@
+import { faker } from "@faker-js/faker";
 import { Config, Generator, Schema } from "./meta-models";
+import { buildNameVariations, pascalCase } from "./name-variations";
 import {
-  buildNameVariations,
-  camelCase,
-  lowercase,
-  pascalCase,
-  startCase,
-} from "./name-variations";
-import {
-  getConstructorParameters,
-  getforeignObjSchemas,
   getValueTypeMembers,
+  getforeignObjSchemas,
   quoteWrapper,
 } from "./shared-dotnet-utility-methods";
-import { faker } from "@faker-js/faker";
 
 const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =

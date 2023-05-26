@@ -1,19 +1,5 @@
 import { Config, Generator, Schema } from "./meta-models";
-import {
-  IVariations,
-  buildNameVariations,
-  camelCase,
-  lowercase,
-  pascalCase,
-  startCase,
-} from "./name-variations";
-import {
-  getConstructorParameters,
-  getforeignObjSchemas,
-  getValueTypeMembers,
-  quoteWrapper,
-} from "./shared-dotnet-utility-methods";
-import { faker } from "@faker-js/faker";
+import { IVariations, buildNameVariations } from "./name-variations";
 
 const generate = (schema: Schema, { name }: Config) => {
   const parent = buildNameVariations(schema);
