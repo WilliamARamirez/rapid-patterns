@@ -8,7 +8,8 @@ import {
 } from "./name-variations";
 import {
   getConstructorParameters,
-  getStringsFromProps,
+  getforeignObjSchemas,
+  getValueTypeMembers,
 } from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {
@@ -16,64 +17,62 @@ const generate = (schema: Schema, { name }: Config) => {
     buildNameVariations(schema);
 
   const { props } = schema;
-  const topLevelStrings = getStringsFromProps(props);
+  const valueTypeMembers = getValueTypeMembers(props);
+  const foreignObjSchemas = getforeignObjSchemas(props);
 
-  const dtoValuePropsArray = topLevelStrings.map((p, index, arr) => {
+  const foreignObjsAssignmentArray = valueTypeMembers.map((m, index, arr) => {
     const isLast = index === arr.length - 1;
-    return `${camelCase(p.value)}: ${ref}.${pascalCase(p.value)}${
+    return `${camelCase(m.value)}: ${ref}.${pascalCase(m.value)}${
       isLast ? "" : ", \n \t"
     }`;
   });
-  const dtoValueProps = [
+  const dtoValueTypeProperties = [
     ...[`id: ${ref}.Id, \n \t`],
-    ...dtoValuePropsArray,
+    ...foreignObjsAssignmentArray,
   ].join("\t");
 
-  const dtoObjectProps = props
+  const foreignObjLists = props
     .filter((p) => p.type === "objectList")
     .map((p) => {
       const obj = p.value;
-      const objSchema = buildNameVariations(obj);
-      const objStrings = obj.props.filter((p) => p.type === "string");
-      const args = objStrings.map((p, index, arr) => {
+      const childSchema = buildNameVariations(obj);
+      const memberStrings = obj.props.filter((m) => m.type === "string");
+      const ctorArgsForObj = memberStrings.map((ms, index, arr) => {
         const isLast = index === arr.length - 1;
-        return `${objSchema.ref}.${startCase(p.value)}${
+        return `${childSchema.ref}.${startCase(ms.value)}${
           isLast ? "" : ", \n \t"
         }`;
       });
 
-      return `${objSchema.refs}: new List&lt;${objSchema.model}DTO&gt;
+      return `${childSchema.refs}: new List&lt;${childSchema.model}DTO&gt;
          (
-             ${ref}.${objSchema.models}.Select(${objSchema.ref} => new ${objSchema.model}DTO(${objSchema.ref}.Id, ${args}).ToList()
+             ${ref}.${childSchema.models}.Select(${childSchema.ref} => new ${childSchema.model}DTO(${childSchema.ref}.Id, ${ctorArgsForObj}).ToList()
          )
          `;
     });
 
-  const constructorReqArgs = topLevelStrings
-    .map((p, index, arr) => {
+  const requestObjCtorArgs = valueTypeMembers
+    .map((m, index, arr) => {
       const isLast = index === arr.length - 1;
-      return `request.${startCase(p.value)}${isLast ? "" : ", \n \t"}`;
+      return `request.${startCase(m.value)}${isLast ? "" : ", "}`;
     })
     .join("");
 
-  const creationResultDtoValues = [...[{ value: "id" }], ...topLevelStrings];
-  const creationResultDto = creationResultDtoValues
-    .map((p, index, arr) => {
+  const ctorResultDtoValues = [...[{ value: "id" }], ...valueTypeMembers];
+  const creationResultDto = ctorResultDtoValues
+    .map((v, index, arr) => {
       const isLast = index === arr.length - 1;
-      return `${lowercase(p.value)}: created${model}.${pascalCase(p.value)}${
+      return `${lowercase(v.value)}: created${model}.${pascalCase(v.value)}${
         isLast ? "" : ", \n \t"
       }`;
     })
     .join("");
 
-  const createObjectSpecifications = props
-    .filter((p) => p.type === "objectList")
-    .map((p) => {
-      const obj = p.value;
-      const objSchema = buildNameVariations(obj);
-      return `var ${model}spec = new ${model}ByIdWith${objSchema.models}Spec(${ref}Id);`;
+  const ForeignObjectToBeReturnedWithSpecification = foreignObjSchemas
+    .map((schema) => {
+      return `${schema.models}`;
     })
-    .join("\n \t");
+    .join("");
 
   const template = `
   using ${name}.Core.ProjectAggregate;
@@ -100,7 +99,7 @@ const generate = (schema: Schema, { name }: Config) => {
       var ${ref}DTOs = (await _repository.ListAsync())
           .Select(${ref} => new ${model}DTO
           (
-                ${dtoValueProps}
+                ${dtoValueTypeProperties}
           ))
           .ToList();
   
@@ -111,7 +110,7 @@ const generate = (schema: Schema, { name }: Config) => {
     [HttpGet("{${ref}Id:int}")]
     public async Task<IActionResult> GetById(int ${ref}Id)
     {
-      var ${model}spec = new ${model}ByIdWithProjectsSpec(${ref}Id);
+      var ${model}spec = new ${model}ByIdWith${ForeignObjectToBeReturnedWithSpecification}Spec(${ref}Id);
       var ${ref} = await _repository.FirstOrDefaultAsync(${model}spec);
       if (${ref} == null)
       {
@@ -120,8 +119,8 @@ const generate = (schema: Schema, { name }: Config) => {
   
       var result = new ${model}DTO
       (
-                ${dtoValueProps}${dtoObjectProps ? "," : ""}
-                ${dtoObjectProps}
+                ${dtoValueTypeProperties}${foreignObjLists ? "," : ""}
+                ${foreignObjLists}
       );
   
       return Ok(result);
@@ -131,7 +130,7 @@ const generate = (schema: Schema, { name }: Config) => {
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Create${model}DTO request)
     {
-      var new${model} = new ${model}(${constructorReqArgs});
+      var new${model} = new ${model}(${requestObjCtorArgs});
   
       var created${model} = await _repository.AddAsync(new${model});
   

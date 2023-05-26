@@ -3,6 +3,7 @@ import "highlight.js/styles/tomorrow-night-bright.css";
 
 import hljs from "highlight.js";
 import typescript from "highlight.js/lib/languages/typescript";
+import { initClipboard } from "./clipboard";
 
 hljs.registerLanguage("typescript", typescript);
 
@@ -16,6 +17,7 @@ import { DotnetEntityGenerator } from "./dotnet-entities";
 import { DotnetControllerGenerator } from "./dotnet-controllers";
 import { DotnetDtoGenerator } from "./dotnet-dto";
 import { DotnetAddToDbContextGenerator } from "./db-context-generator";
+import { DotnetSeedGenerator } from "./dotnet-seed";
 
 const projectSchema: Schema = {
   model: "project",
@@ -41,33 +43,53 @@ const config: Config = {
 
 const appDiv: HTMLElement = document.getElementById("app");
 appDiv.innerHTML = `
-<h2>.NET add to snippets to AppDbContext </h2>
+<h2>.NET seed generator </h2>
+<button class="btn" data-clipboard-target="#dot-net-seed">Copy</button> 
 <pre>
-<code class="language-typescript">${
-  DotnetAddToDbContextGenerator.generate(clientSchema, config).template
-}</code>  
+<code id="dot-net-seed" class="language-typescript">${
+  DotnetSeedGenerator.generate(clientSchema, config).template
+}
+</code>
 </pre>
 
-<h2>.NET DTOs </h2>
+<h2>.NET add to snippets to AppDbContext </h2>
+<button class="btn" data-clipboard-target="#dot-net-db-context">Copy</button> 
 <pre>
-<code class="language-typescript">${
+<code id="dot-net-db-context" class="language-typescript">${
+  DotnetAddToDbContextGenerator.generate(clientSchema, config).template
+}
+</code>
+</pre>
+
+
+
+<h2>.NET DTOs </h2>
+<button class="btn" data-clipboard-target="#dot-net-dto">Copy</button> 
+<pre>
+<code id="dot-net-dto" class="language-typescript">${
   DotnetDtoGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
 
+
 <h2>.NET Controllers </h2>
+<button class="btn" data-clipboard-target="#dot-net-controllers">Copy</button> 
 <pre>
-<code class="language-typescript">${
+<code id="dot-net-controllers" class="language-typescript">${
   DotnetControllerGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
 
+
 <h2>.NET Entities </h2>
+<button class="btn" data-clipboard-target="#dot-net-entities">Copy</button>
 <pre>
-<code class="language-typescript">${
+<code id="dot-net-entities" class="language-typescript">${
   DotnetEntityGenerator.generate(clientSchema, config).template
 }</code>  
 </pre>
+
+
 
 <h2>.NET GRPC Service </h2>
 <pre>
@@ -111,3 +133,5 @@ appDiv.innerHTML = `
 `;
 
 hljs.highlightAll();
+
+const clipboard = initClipboard(".btn");

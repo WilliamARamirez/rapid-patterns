@@ -6,7 +6,10 @@ import {
   pascalCase,
   startCase,
 } from "./name-variations";
-import { getConstructorParameters } from "./shared-dotnet-utility-methods";
+import {
+  getConstructorParameters,
+  getforeignObjSchemas,
+} from "./shared-dotnet-utility-methods";
 
 const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =
@@ -14,6 +17,7 @@ const generate = (schema: Schema, { name }: Config) => {
   const { props } = schema;
 
   const constructorParameters = getConstructorParameters(props);
+  const foreignObjSchemas = getforeignObjSchemas(props);
 
   const assignments = props
     .filter((p) => p.type === "string")
@@ -25,10 +29,8 @@ const generate = (schema: Schema, { name }: Config) => {
     })
     .join("");
 
-  const addObjectMethods = props
-    .filter((p) => p.type === "objectList")
-    .map((p) => {
-      const obj = buildNameVariations(p.value);
+  const addObjectMethods = foreignObjSchemas
+    .map((obj) => {
       return `\tpublic void Add${obj.model}(${obj.model} new${obj.model})
 \t{
 \t\tGuard.Against.Null(new${obj.model}, nameof(new${obj.model}));
