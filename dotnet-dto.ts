@@ -10,26 +10,37 @@ const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =
     buildNameVariations(schema);
   const { props } = schema;
+  const safeProps = props || [];
 
-  const foreignObjSchemas = getforeignObjSchemas(props);
+  const foreignObjSchemas = getforeignObjSchemas(safeProps) || [];
 
   const ctorsForForeignObjects = foreignObjSchemas.map((s) => {
+    if (!s.model || !s.refs || !s.ref) {
+      return "";
+    }
     return `List&lt;${s.model}DTO&gt; ${s.refs} = null`;
   });
 
   const foreignObjAssignments = foreignObjSchemas
     .map((p) => {
+      if (!p.model || !p.refs || !p.ref) {
+        return "";
+      }
       return `\t${p.models} = ${p.refs} ?? new List&lt;${p.model}DTO&gt;()\n`;
     })
     .join(";");
 
   const foreignObjAccessors = foreignObjSchemas
     .map((p) => {
+      if (!p.model || !p.refs || !p.ref) {
+        return "";
+      }
+
       return `\tpublic List&lt;${p.model}DTO&gt; ${p.models} { get; set; }\n`;
     })
     .join(";");
 
-  const ctorArgsString = getConstructorParameters(props);
+  const ctorArgsString = getConstructorParameters(safeProps);
   const ctorArgsArr = ctorArgsString.split(",");
   const constructorArgs = [
     `int id`,
@@ -37,16 +48,24 @@ const generate = (schema: Schema, { name }: Config) => {
     ...ctorsForForeignObjects,
   ].join(", ");
 
-  const valueTypeMembers = getValueTypeMembers(props);
+  const valueTypeMembers = getValueTypeMembers(safeProps);
 
   const baseClassArgAssignment = valueTypeMembers
     .map((s) => {
+      if (!s.value) {
+        return "";
+      }
+
       return `\t${startCase(s.value)} = ${camelCase(s.value)};\n`;
     })
     .join("");
 
   const baseClassArgAccessors = valueTypeMembers
     .map((s) => {
+      if (!s.value) {
+        return "";
+      }
+
       return `\tpublic string ${startCase(s.value)} { get; set; }\n`;
     })
     .join("");

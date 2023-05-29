@@ -9,11 +9,12 @@ const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =
     buildNameVariations(schema);
   const { props } = schema;
+  const safeProps = props || [];
 
-  const constructorParameters = getConstructorParameters(props);
-  const foreignObjSchemas = getforeignObjSchemas(props);
+  const constructorParameters = getConstructorParameters(props) || "";
+  const foreignObjSchemas = getforeignObjSchemas(props) || [];
 
-  const assignments = props
+  const assignments = safeProps
     .filter((p) => p.type === "string")
     .map((p) => {
       return `\t${startCase(p.value)} = Guard.Against.NullOrEmpty(${camelCase(

@@ -1,10 +1,10 @@
 import { buildNameVariations, camelCase } from "./name-variations";
 
 export const getConstructorParameters = (props) => {
-  const constructorParametersWithCommas = props
+  const constructorParametersWithCommas = (props || [])
     .filter((p) => p.type === "string")
     .map((p) => {
-      return `string ${camelCase(p.value)}`;
+      return `string ${camelCase(p?.value)}`;
     })
     .join(",");
 
@@ -15,13 +15,13 @@ export const getConstructorParameters = (props) => {
 };
 
 export const getValueTypeMembers = (props) =>
-  props.filter((p) => p.type !== "objectList");
+  (props || []).filter((p) => p?.type !== "objectList");
 
 export const getforeignObjSchemas = (props) =>
-  props
+  (props || [])
     .filter((p) => p.type === "objectList")
     .map((p) => {
-      return buildNameVariations(p.value);
+      return buildNameVariations(p?.value);
     });
 
 export const quoteWrapper = (value) => {
@@ -33,10 +33,10 @@ export const quoteWrapper = (value) => {
 };
 
 export const getForeignObjectToBeReturnedWithSpecification = (
-  foreignObjSchemas
+  foreignObjSchemas = []
 ) =>
   foreignObjSchemas
     .map((schema) => {
-      return `${schema.models}`;
+      return `${schema?.models}`;
     })
     .join("");

@@ -4,6 +4,7 @@ import { IVariations, buildNameVariations } from "./name-variations";
 const generate = (schema: Schema, { name }: Config) => {
   const parent = buildNameVariations(schema);
   const { props } = schema;
+  const safeProps = props || [];
 
   const genEventOfForeignObjectAddedToParent = (
     name,
@@ -11,6 +12,9 @@ const generate = (schema: Schema, { name }: Config) => {
     parent: IVariations
   ) => {
     const f = buildNameVariations(foreignObj);
+    if (!f.model || !parent.model || !parent.ref || !f.ref) {
+      return "";
+    }
 
     return `
   //separate file
@@ -35,7 +39,7 @@ const generate = (schema: Schema, { name }: Config) => {
   `;
   };
 
-  const foreignObjects = props.filter((p) => p.type === "objectList");
+  const foreignObjects = safeProps.filter((p) => p.type === "objectList");
   const foreignObjectEvents = foreignObjects
     .map((f) => genEventOfForeignObjectAddedToParent(name, f.value, parent))
     .join("\n\n\n");

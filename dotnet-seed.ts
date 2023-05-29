@@ -11,10 +11,11 @@ const generate = (schema: Schema, { name }: Config) => {
   const { ref, refs, model, models, singleParams } =
     buildNameVariations(schema);
   const { props } = schema;
+  const safeProps = props || [];
 
-  const valueTypeMembers = getValueTypeMembers(props);
+  const valueTypeMembers = getValueTypeMembers(props) || [];
 
-  const objectValueAssignment = (prop) => {
+  const objectValueAssignment = (props) => {
     return valueTypeMembers
       .map((m) => {
         let memberValue;
@@ -52,7 +53,7 @@ const generate = (schema: Schema, { name }: Config) => {
     const addStatements = [];
     let counter = 1;
     while (numOfForeignObjects >= counter) {
-      const round = foreignObjects
+      const round = (foreignObjects || [])
         .map((f) => {
           addStatements.push(
             `\n\t${parent}.AddItem(${f.model}${counter}For${parent});`

@@ -17,11 +17,15 @@ const generate = (schema: Schema, { name }: Config) => {
     buildNameVariations(schema);
 
   const { props } = schema;
-  const valueTypeMembers = getValueTypeMembers(props);
-  const foreignObjSchemas = getforeignObjSchemas(props);
+  const safeProps = props || [];
+  const valueTypeMembers = getValueTypeMembers(safeProps) || [];
+  const foreignObjSchemas = getforeignObjSchemas(safeProps) || [];
 
   const foreignObjsAssignmentArray = valueTypeMembers.map((m, index, arr) => {
     const isLast = index === arr.length - 1;
+    if (!m.value) {
+      return "";
+    }
     return `${camelCase(m.value)}: ${ref}.${pascalCase(m.value)}${
       isLast ? "" : ", \n \t"
     }`;
@@ -31,18 +35,32 @@ const generate = (schema: Schema, { name }: Config) => {
     ...foreignObjsAssignmentArray,
   ].join("\t");
 
-  const foreignObjLists = props
+  const foreignObjLists = safeProps
     .filter((p) => p.type === "objectList")
     .map((p) => {
-      const obj = p.value;
+      const obj = p?.value;
       const childSchema = buildNameVariations(obj);
-      const memberStrings = obj.props.filter((m) => m.type === "string");
-      const ctorArgsForObj = memberStrings.map((ms, index, arr) => {
+      const memberStrings = (obj?.props || []).filter(
+        (m) => m.type === "string"
+      );
+      const ctorArgsForObj = (memberStrings || []).map((ms, index, arr) => {
         const isLast = index === arr.length - 1;
+        if (!childSchema?.ref || !ms.value) {
+          return "";
+        }
         return `${childSchema.ref}.${startCase(ms.value)}${
           isLast ? "" : ", \n \t"
         }`;
       });
+
+      if (
+        !childSchema?.ref ||
+        !childSchema?.model ||
+        !childSchema?.models ||
+        !childSchema?.refs
+      ) {
+        return "";
+      }
 
       return `${childSchema.refs}: new List&lt;${childSchema.model}DTO&gt;
          (
@@ -51,17 +69,23 @@ const generate = (schema: Schema, { name }: Config) => {
          `;
     });
 
-  const requestObjCtorArgs = valueTypeMembers
+  const requestObjCtorArgs = (valueTypeMembers || [])
     .map((m, index, arr) => {
       const isLast = index === arr.length - 1;
+      if (!m.value) {
+        return "";
+      }
       return `request.${startCase(m.value)}${isLast ? "" : ", "}`;
     })
     .join("");
 
   const ctorResultDtoValues = [...[{ value: "id" }], ...valueTypeMembers];
-  const creationResultDto = ctorResultDtoValues
+  const creationResultDto = (ctorResultDtoValues || [])
     .map((v, index, arr) => {
       const isLast = index === arr.length - 1;
+      if (!v.value) {
+        return "";
+      }
       return `${lowercase(v.value)}: created${model}.${pascalCase(v.value)}${
         isLast ? "" : ", \n \t"
       }`;

@@ -8,10 +8,17 @@ import {
 const generate = (schema: Schema, { name }: Config) => {
   const parent = buildNameVariations(schema);
   const { props } = schema;
+  const safeProps = props || [];
 
-  const foreignObjSchemas = getforeignObjSchemas(props);
+  const foreignObjSchemas = getforeignObjSchemas(safeProps) || [];
   const foreignObjectToBeReturnedWithSpecification =
-    getForeignObjectToBeReturnedWithSpecification(foreignObjSchemas);
+    getForeignObjectToBeReturnedWithSpecification(foreignObjSchemas) || "";
+
+  const includeStatements = (foreignObjSchemas || [])
+    .map((f) => {
+      return `.Include(${parent.ref} => ${parent.ref}.${f.model})`;
+    })
+    .join("\n \t");
 
   const template = `
 using Ardalis.Specification;
@@ -25,7 +32,7 @@ public class ${parent.model}ByIdWith${foreignObjectToBeReturnedWithSpecification
   {
     Query
         .Where(${parent.ref} => ${parent.ref}.Id == ${parent.ref}Id)
-        .Include(${parent.ref} => ${parent.ref}.${foreignObjectToBeReturnedWithSpecification});
+       ${includeStatements}
   }
 }
   `;
